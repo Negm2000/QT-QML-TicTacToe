@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Window 2.2
 
 Window {
     property bool player: true
