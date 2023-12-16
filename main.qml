@@ -1,24 +1,49 @@
 import QtQuick
 import QtQuick.Controls
-
+import "grid_functions.js" as GridFuncs
 Window {
-    property bool player: true
+    property bool player: true // true = X, false =  O
     visible: true
     visibility: "Maximized"
-    title: qsTr("Tic Tac Toes: Player " + (player ? 1:2) + " turn");
+    title: "Tic Tac Toes: Player " + (player ? "X":"O") + " turn"
     id: root
-    color: board.gridSz === 0 ? "#1C1C1C" : "red"
+    color: "red"
+
+    Dialog {
+        id: gameover
+        title: "Winner Winner Chicken Dinner"
+        standardButtons: Dialog.Ok
+        visible: GridFuncs.isGameover(cells,board.gridSz)
+        anchors.centerIn: parent
+        height:240; width:480
+        onAccepted: root.close()
+        modal: true
+        Overlay.modal: Rectangle {
+            color: "#1C1C1C"
+        }
+        Text {
+            text: (player? "O": "X") + " Wins!"
+            font.pixelSize: parent.width/5
+            font.family: "Roboto"
+            font.bold: true
+            anchors.centerIn: parent
+        }
+    }
 
     Dialog {
         id: dialog
-        title: "Select grid size"
+        title: "Grid Size"
         standardButtons: Dialog.Ok | Dialog.Cancel
         visible: true
         anchors.centerIn: parent
         height:240; width:480
         onAccepted: board.gridSz = optionSlider.value
-        onRejected: board.gridSz = 3
-        onClosed: board.makeMagicSquare(cells)
+        onRejected: board.gridSz = root.close()
+        onClosed: GridFuncs.makeMagicSquare(cells,board.gridSz)
+        modal: true
+        Overlay.modal: Rectangle {
+            color: "#1C1C1C"
+        }
 
         Slider {
             id: optionSlider
@@ -41,46 +66,24 @@ Window {
     Grid {
         id: board
         property int gridSz: 0
-        readonly property int magicSum: (gridSz * (gridSz*gridSz + 1))/2
+        property bool isGameOver: false
         columns: gridSz
         rows: gridSz
         spacing: 2
         focus: true
         Keys.onEscapePressed: root.close()
 
-        function toIdx(row,col){return (row*gridSz + col);}
-
-        // Magic Squares Algorithm
-        function makeMagicSquare(grid){
-            let n = 1;
-            let row = Math.floor(gridSz/2), col = gridSz - 1;
-            grid.itemAt(toIdx(row,col)).magicNumber = n++;
-            row--;col++;
-
-            while(n <= gridSz*gridSz){
-                // Magic square rules
-                if (row === -1 && col === gridSz) {row = 0; col-=2; continue;}
-                if (row < 0) {row = gridSz - 1; continue;}
-                if (col === gridSz) {col = 0; continue;}
-                if (grid.itemAt(toIdx(row,col)).magicNumber > 0){row++; col-=2; continue;}
-
-                // Populate the grid
-                let cellIdx = toIdx(row,col);
-                grid.itemAt(cellIdx).magicNumber = n++;
-                row--;col++;
-            }
-        }
 
         // Create the grid
         Repeater {
             id: cells
-            model: board.gridSz * board.gridSz
+            model: board.gridSz**2
             Rectangle {
-                color: "#1c1c1c"
-                width: root.width/board.gridSz; height: root.height/board.gridSz
                 property bool isClicked: false
                 property bool occupyingPlayer: false // false is X, true is O
                 property int magicNumber: 0
+                color: "#1c1c1c"
+                width: root.width/board.gridSz; height: root.height/board.gridSz
 
                 MouseArea {
                     anchors.fill: parent
@@ -90,23 +93,27 @@ Window {
                     }
                 }
 
-                Text {
-                    text: parent.isClicked? text : player? "O" : "X"
-                    onTextChanged: parent.occupyingPlayer = player
-                    font.pixelSize: parent.width/2
-                    anchors.centerIn: parent
-                    color:"#C0C0C0";
-                    visible: parent.isClicked
-                }
 
                 Text{
                     text: parent.magicNumber
-                    anchors.fill: parent
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
                     font.pixelSize: parent.width/12
                     color: "#C0C0C0"
                 }
+
+                Text {
+                    text: parent.isClicked? text : player? "O" : "X"
+                    onTextChanged: {
+                        parent.occupyingPlayer = player;
+                    }
+                    font.pixelSize: parent.width/2
+                    anchors.centerIn: parent
+                    color:"#C0C0C0";
+                    visible: parent.isClicked
+
+                }
+
             }
         }
     }

@@ -16,6 +16,7 @@ qt_add_qml_module(appXO
     VERSION 1.0
     QML_FILES main.qml
     SOURCES
+    QML_FILES grid_functions.js
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
